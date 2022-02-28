@@ -1,0 +1,56 @@
+version: '3.7'
+
+services:
+  database:
+    image: 'postgres'
+    container_name: database
+    environment:
+      POSTGRES_PASSWORD: 'root'
+      POSTGRES_DB: 'docker_db'
+    networks:
+      server:
+        aliases:
+          - server_bd
+    volumes: 
+      - 'db:/var/lib/postgresql/data'
+    ports:
+      - 5432:5432
+  api:
+    build:
+      context: ./api/
+      dockerfile: ./Dockerfile
+    ports:
+      - '8000:5000'
+    networks:
+      server:
+        aliases:
+          - server_api
+      client:
+        aliases:
+          - client_api
+    depends_on:
+      - database
+  bash:
+    build:
+      context: ./
+      dockerfile: ./bin_bash/Dockerfile
+    container_name: bin_bash
+    stdin_open: true
+    tty: true
+    networks:
+      client:
+        aliases:
+          - client_bash
+networks:
+  server:
+    name: network1
+    driver: bridge
+    ipam:
+      driver: default
+  client:
+    name: network2
+    driver: bridge
+    ipam:
+      driver: default
+volumes: 
+  db:  
