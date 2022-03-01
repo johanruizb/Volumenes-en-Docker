@@ -5,8 +5,11 @@ services:
     image: 'postgres'
     container_name: database
     environment:
+      POSTGRES_USER: 'postgresql'
       POSTGRES_PASSWORD: 'root'
       POSTGRES_DB: 'docker_db'
+      POSTGRES_HOST: 'localhost'
+      POSTGRES_PORT: '5432'
     networks:
       server:
         aliases:
@@ -16,11 +19,15 @@ services:
     ports:
       - 5432:5432
   api:
-    build:
-      context: ./
-      dockerfile: ./api/Dockerfile
+    build: ./api
+    restart: always
+    container_name: api
     ports:
-      - '8000:5000'
+      - '5000:5000'
+    depends_on:
+      - database
+    environment:
+      - DATABASE_URL=postgresql://postgresql:root@172.20.0.2:5432/docker_db
     networks:
       server:
         aliases:
@@ -28,12 +35,8 @@ services:
       client:
         aliases:
           - client_api
-    depends_on:
-      - database
   bash:
-    build:
-      context: ./
-      dockerfile: ./bin_bash/Dockerfile
+    build: ./bin_bash
     container_name: bin_bash
     stdin_open: true
     tty: true
