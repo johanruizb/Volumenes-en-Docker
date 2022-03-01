@@ -32,8 +32,8 @@ services:
       - database
   bash:
     build:
-      context: ./
-      dockerfile: ./bin_bash/Dockerfile
+      context: ./bin_bash/
+      dockerfile: ./Dockerfile
     container_name: bin_bash
     stdin_open: true
     tty: true
