@@ -6,13 +6,13 @@ app = Flask(__name__)
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+print(os.environ['DATABASE_URL'])
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
 
 
 class Products(db.Model):
-    __tablename__ = 'Productos'
+    __tablename__ = 'productos'
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     nombre = db.Column(db.String(255), nullable=False)
@@ -23,19 +23,28 @@ class Products(db.Model):
         self.precio = precio
 
     def __repr__(self):
-        return f"<Product {self.nombre}>"
-
-    #db.create_all()
+        return 'Clase productos'
 
 
-#SELECT FOR ID
-@app.route('/product?id=<id>', methods=['GET'])
-def get_product(id):
+db.create_all()
+db.session.commit()
+
+
+@app.route('/', methods=['GET'])
+def home():
+    return 'Home page'
+
+
+# SELECT FOR ID
+@app.route('/product', methods=['GET'])
+def get_product():
+    id = request.args.get('id')
     product = Products.query.get(id)
     del product.__dict__['_sa_instance_state']
     return jsonify(product.__dict__)
 
 
+# SELECT ALL
 @app.route('/products', methods=['GET'])
 def get_products():
     productList = []
@@ -45,30 +54,35 @@ def get_products():
     return jsonify(productList)
 
 
-@app.route('/add?nombre=<nombre>;precio=<precio>', methods=['GET'])
-def create_item(nombre, precio):
+# ADD PRODUCT
+@app.route('/add', methods=['POST', 'GET'])
+def create_item():
+    print(request.args.get('nombre'))
+    nombre = request.args.get('nombre')
+    precio = request.args.get('precio')
     db.session.add(Products(nombre, precio))
     db.session.commit()
-    return f'Product {nombre} created'
+    message = f'The data for sock {nombre} has been submitted.'
+    return message
 
 
-@app.route('/update?id=<id>;nombre=<nombre>;precio=<precio>',
-           methods=['GET', 'PUT'])
-def update_item(idUpdate, nombre, precio):
-    body = request.get_json()
-    db.session.query(Products).filter_by(id=idUpdate).update(
-        dict(nombre, precio))
+# UPDATE PRODUCT
+@app.route('/update/<int:id>', methods=['GET', 'PUT'])
+def update_item(id):
+    nombre = request.args.get('nombre').upper()
+    precio = request.args.get('precio')
+
+    product = Products.query.filter_by(id=id).first()
+    product.nombre = nombre
+    product.precio = precio
     db.session.commit()
-    return f"Product [{idUpdate}] {nombre} updated"
+    return f'Product [{id}] {nombre} updated'
 
 
-@app.route('/delete?id=<id>', methods=['GET', 'DELETE'])
-def delete_item(idDelete):
-    db.session.query(Products).filter_by(id=idDelete).delete()
+# DELETE PRODUCT
+@app.route('/delete', methods=['GET', 'DELETE'])
+def delete_item():
+    id = request.args.get('id')
+    db.session.query(Products).filter_by(id=id).delete()
     db.session.commit()
-    return f"Product [{idDelete}] deleted"
-
-
-@app.route('/', methods=['GET'])
-def hello_word():
-    return ""
+    return f'Product [{id}] deleted'
