@@ -14,7 +14,7 @@ services:
     volumes: 
       - 'db:/var/lib/postgresql/data'
     ports:
-      - 5432:5432
+      - '5432:5432'
   api:
     build:
       context: ./api/
@@ -53,4 +53,5 @@ networks:
     ipam:
       driver: default
 volumes: 
-  db:  
+  db:
+    external: true
